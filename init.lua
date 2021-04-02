@@ -123,6 +123,7 @@ load_data()
 minetest.register_globalstep(tick)
 minetest.register_on_shutdown(save_data)
 minetest.register_on_prejoinplayer(on_join)
+minetest.register_chatcommand("opening_hours", {privs = {server = true}, description = "Die Öffnungszeiten konfigurieren", func = show_gui})
 minetest.register_chatcommand("öffnungszeiten", {privs = {server = true}, description = "Die Öffnungszeiten konfigurieren", func = show_gui})
 minetest.register_on_player_receive_fields(progress_gui_input)
 
