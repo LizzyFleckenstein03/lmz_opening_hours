@@ -20,21 +20,15 @@ local function is_weekend()
 	return d == "0" or d == "6"
 end
 
-local function opening_hours_index(t, k)
-	if k:sub(1, 6) == "today_" then 
-		return t[k:gsub("today_", is_weekend() and "weekend_" or "weekday_")]
-	else
-		return opening_hours_default[k]
-	end
-end
-
 local function save_data()
 	storage:from_table({fields = opening_hours})
 end
 
 local function load_data()
 	opening_hours = storage:to_table().fields
-	setmetatable(opening_hours, {__index = opening_hours_index})
+	if not opening_hours.weekday_start then
+		opening_hours = opening_hours_default
+	end
 end
 
 local function reset_execption()
@@ -43,10 +37,22 @@ local function reset_execption()
 	opening_hours.today_end = nil
 end
 
+local function opening_today()
+	local today = opening_hours_today
+	if today and today == get_date_formated() then
+		return opening_hours.today_start, opening_hours.today_end
+	elseif is_weekend() then
+		return opening_hours.weekend_start, opening_hours.weekend_end
+	else
+		return opening_hours.weekday_start, opening_hours.weekday_end
+	end
+end
+
 local function create_exception()
+	local today_start, today_end = opening_today()
 	opening_hours.today = get_date_formated()
-	opening_hours.today_start = opening_hours.today_start
-	opening_hours.today_end = opening_hours.today_end
+	opening_hours.today_start = today_start
+	opening_hours.today_end = today_end
 end
 
 local function tick(dtime)
@@ -54,7 +60,8 @@ local function tick(dtime)
 	if opening_hours.today and opening_hours.today ~= get_date_formated() then
 		reset_execption()
 	end
-	local diff = tonumber(opening_hours.today_end) - d.hour
+	local today_start, today_end = opening_today()
+	local diff = tonumber(today_end) - d.hour
 	if diff == 1 then
 		local minutes_remaining = (60 - d.min)
 		if minutes_remaining <= tonumber(opening_hours.warn_offset) then
@@ -77,11 +84,12 @@ end
 
 local function on_join(name)
 	if minetest.check_player_privs(name, {server = true}) then return end
+	local today_start, today_end = opening_today()
  	local d = get_date()
-	local diff = tonumber(opening_hours.today_start) - d.hour
+	local diff = tonumber(today_start) - d.hour
 	if diff > 0 then
 		return "Besuch erfolgte außerhalb der Öffnungszeiten. Der Server hat in " .. math.ceil(diff) .. " Stunde(n) wieder geöffnet."
-	elseif tonumber(opening_hours.today_end) <= d.hour then
+	elseif tonumber(today_end) <= d.hour then
 		return "Besuch erfolgte außerhalb der Öffnungszeiten. Der Server hat bereits geschlossen und hat Morgen wieder geöffnet."
 	end
 end
