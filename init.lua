@@ -190,41 +190,26 @@ local function show_gui(name)
 	local minute_off = 0.04
 	local to_off = 1.24
 	local day_off = 3.6
-	local lab_day1_x = 0.1
-	local fld_day1_f_hour_x = 0.64
-	local fld_day1_f_minute_x = fld_day1_f_hour_x + fld_w - minute_off
-	local lab_day1_f_colon_x = fld_day1_f_minute_x - pre_colon_off
-	local fld_day1_t_hour_x = lab_day1_f_colon_x + to_off
-	local fld_day1_t_minute_x = fld_day1_t_hour_x + fld_w - minute_off
-	local lab_day1_t_colon_x = fld_day1_t_minute_x - pre_colon_off
-	local lab_day2_x = lab_day1_x + day_off
-	local fld_day2_f_hour_x = fld_day1_f_hour_x + day_off
-	local fld_day2_f_minute_x = fld_day1_f_minute_x + day_off
-	local lab_day2_f_colon_x = lab_day1_f_colon_x + day_off
-	local fld_day2_t_hour_x = fld_day1_t_hour_x + day_off
-	local fld_day2_t_minute_x = fld_day1_t_minute_x + day_off
-	local lab_day2_t_colon_x = lab_day1_t_colon_x + day_off
-	local lab_day3_x = lab_day2_x + day_off
-	local fld_day3_f_hour_x = fld_day2_f_hour_x + day_off
-	local fld_day3_f_minute_x = fld_day2_f_minute_x + day_off
-	local lab_day3_f_colon_x = lab_day2_f_colon_x + day_off
-	local fld_day3_t_hour_x = fld_day2_t_hour_x + day_off
-	local fld_day3_t_minute_x = fld_day2_t_minute_x + day_off
-	local lab_day3_t_colon_x = lab_day2_t_colon_x + day_off
-	local lab_day4_x = lab_day3_x + day_off
-	local fld_day4_f_hour_x = fld_day3_f_hour_x + day_off
-	local fld_day4_f_minute_x = fld_day3_f_minute_x + day_off
-	local lab_day4_f_colon_x = lab_day3_f_colon_x + day_off
-	local fld_day4_t_hour_x = fld_day3_t_hour_x + day_off
-	local fld_day4_t_minute_x = fld_day3_t_minute_x + day_off
-	local lab_day4_t_colon_x = lab_day3_t_colon_x + day_off
-	local lab_day5_x = lab_day4_x + day_off
-	local fld_day5_f_hour_x = fld_day4_f_hour_x + day_off
-	local fld_day5_f_minute_x = fld_day4_f_minute_x + day_off
-	local lab_day5_f_colon_x = lab_day4_f_colon_x + day_off
-	local fld_day5_t_hour_x = fld_day4_t_hour_x + day_off
-	local fld_day5_t_minute_x = fld_day4_t_minute_x + day_off
-	local lab_day5_t_colon_x = lab_day4_t_colon_x + day_off
+	local x = {
+		day1 = {}
+	}
+	x.day1.lab = 0.1
+	x.day1.fld_f_hour = 0.64
+	x.day1.fld_f_minute = x.day1.fld_f_hour + fld_w - minute_off
+	x.day1.lab_f_colon = x.day1.fld_f_minute - pre_colon_off
+	x.day1.fld_t_hour = x.day1.lab_f_colon + to_off
+	x.day1.fld_t_minute = x.day1.fld_t_hour + fld_w - minute_off
+	x.day1.lab_t_colon = x.day1.fld_t_minute - pre_colon_off
+	local last
+	for day = 1, 5, 1 do
+		if last then
+			x["day" .. day] = {}
+			for k, v in pairs(x["day" .. last]) do
+				x["day" .. day][k] = v + day_off
+			end
+		end
+		last = day
+	end
 	local below_off = 1.1530125704378
 	local lab_b_y = 0.28175119202427
 	local fld_b_y = lab_b_y + below_off
@@ -237,45 +222,45 @@ local function show_gui(name)
 	local lab_e_colon_y = fld_e_y - inline_off
 	local o = opening_hours
 	local formspec_day1 = ""
-	.. "label[" .. lab_day1_x .. "," .. lab_b_y .. ";Mo.]"
-	.. "field[" .. fld_day1_f_hour_x .. "," .. fld_b_y .. ";" .. fld_sz .. ";fld_day1_start_hour;von;" .. string.format("%02d", o.day1_start_hour) .. "]"
-	.. "label[" .. lab_day1_f_colon_x .. "," .. lab_b_colon_y .. ";:]"
-	.. "field[" .. fld_day1_f_minute_x .. "," .. fld_b_y .. ";" .. fld_sz .. ";fld_day1_start_minute;;" .. string.format("%02d", o.day1_start_minute) .. "]"
-	.. "field[" .. fld_day1_t_hour_x .. "," .. fld_b_y .. ";" .. fld_sz .. ";fld_day1_end_hour;bis;" .. string.format("%02d", o.day1_end_hour) .. "]"
-	.. "label[" .. lab_day1_t_colon_x .. "," .. lab_b_colon_y .. ";:]"
-	.. "field[" .. fld_day1_t_minute_x .. "," .. fld_b_y .. ";" .. fld_sz .. ";fld_day1_end_minute;;" .. string.format("%02d", o.day1_end_minute) .. "]"
+	.. "label[" .. x.day1.lab .. "," .. lab_b_y .. ";Mo.]"
+	.. "field[" .. x.day1.fld_f_hour .. "," .. fld_b_y .. ";" .. fld_sz .. ";fld_day1_start_hour;von;" .. string.format("%02d", o.day1_start_hour) .. "]"
+	.. "label[" .. x.day1.lab_f_colon .. "," .. lab_b_colon_y .. ";:]"
+	.. "field[" .. x.day1.fld_f_minute .. "," .. fld_b_y .. ";" .. fld_sz .. ";fld_day1_start_minute;;" .. string.format("%02d", o.day1_start_minute) .. "]"
+	.. "field[" .. x.day1.fld_t_hour .. "," .. fld_b_y .. ";" .. fld_sz .. ";fld_day1_end_hour;bis;" .. string.format("%02d", o.day1_end_hour) .. "]"
+	.. "label[" .. x.day1.lab_t_colon .. "," .. lab_b_colon_y .. ";:]"
+	.. "field[" .. x.day1.fld_t_minute .. "," .. fld_b_y .. ";" .. fld_sz .. ";fld_day1_end_minute;;" .. string.format("%02d", o.day1_end_minute) .. "]"
 	local formspec_day2 = ""
-	.. "label[" .. lab_day2_x .. "," .. lab_b_y .. ";Di.]"
-	.. "field[" .. fld_day2_f_hour_x .. "," .. fld_b_y .. ";" .. fld_sz .. ";fld_day2_start_hour;von;" .. string.format("%02d", o.day2_start_hour) .. "]"
-	.. "label[" .. lab_day2_f_colon_x .. "," .. lab_b_colon_y .. ";:]"
-	.. "field[" .. fld_day2_f_minute_x .. "," .. fld_b_y .. ";" .. fld_sz .. ";fld_day2_start_minute;;" .. string.format("%02d", o.day2_start_minute) .. "]"
-	.. "field[" .. fld_day2_t_hour_x .. "," .. fld_b_y .. ";" .. fld_sz .. ";fld_day2_end_hour;bis;" .. string.format("%02d", o.day2_end_hour) .. "]"
-	.. "label[" .. lab_day2_t_colon_x .. "," .. lab_b_colon_y .. ";:]"
-	.. "field[" .. fld_day2_t_minute_x .. "," .. fld_b_y .. ";" .. fld_sz .. ";fld_day2_end_minute;;" .. string.format("%02d", o.day2_end_minute) .. "]"
+	.. "label[" .. x.day2.lab .. "," .. lab_b_y .. ";Di.]"
+	.. "field[" .. x.day2.fld_f_hour .. "," .. fld_b_y .. ";" .. fld_sz .. ";fld_day2_start_hour;von;" .. string.format("%02d", o.day2_start_hour) .. "]"
+	.. "label[" .. x.day2.lab_f_colon .. "," .. lab_b_colon_y .. ";:]"
+	.. "field[" .. x.day2.fld_f_minute .. "," .. fld_b_y .. ";" .. fld_sz .. ";fld_day2_start_minute;;" .. string.format("%02d", o.day2_start_minute) .. "]"
+	.. "field[" .. x.day2.fld_t_hour .. "," .. fld_b_y .. ";" .. fld_sz .. ";fld_day2_end_hour;bis;" .. string.format("%02d", o.day2_end_hour) .. "]"
+	.. "label[" .. x.day2.lab_t_colon .. "," .. lab_b_colon_y .. ";:]"
+	.. "field[" .. x.day2.fld_t_minute .. "," .. fld_b_y .. ";" .. fld_sz .. ";fld_day2_end_minute;;" .. string.format("%02d", o.day2_end_minute) .. "]"
 	local formspec_day3 = ""
-	.. "label[" .. lab_day3_x .. "," .. lab_b_y .. ";Mi.]"
-	.. "field[" .. fld_day3_f_hour_x .. "," .. fld_b_y .. ";" .. fld_sz .. ";fld_day3_start_hour;von;" .. string.format("%02d", o.day3_start_hour) .. "]"
-	.. "label[" .. lab_day3_f_colon_x .. "," .. lab_b_colon_y .. ";:]"
-	.. "field[" .. fld_day3_f_minute_x .. "," .. fld_b_y .. ";" .. fld_sz .. ";fld_day3_start_minute;;" .. string.format("%02d", o.day3_start_minute) .. "]"
-	.. "field[" .. fld_day3_t_hour_x .. "," .. fld_b_y .. ";" .. fld_sz .. ";fld_day3_end_hour;bis;" .. string.format("%02d", o.day3_end_hour) .. "]"
-	.. "label[" .. lab_day3_t_colon_x .. "," .. lab_b_colon_y .. ";:]"
-	.. "field[" .. fld_day3_t_minute_x .. "," .. fld_b_y .. ";" .. fld_sz .. ";fld_day3_end_minute;;" .. string.format("%02d", o.day3_end_minute) .. "]"
+	.. "label[" .. x.day3.lab .. "," .. lab_b_y .. ";Mi.]"
+	.. "field[" .. x.day3.fld_f_hour .. "," .. fld_b_y .. ";" .. fld_sz .. ";fld_day3_start_hour;von;" .. string.format("%02d", o.day3_start_hour) .. "]"
+	.. "label[" .. x.day3.lab_f_colon .. "," .. lab_b_colon_y .. ";:]"
+	.. "field[" .. x.day3.fld_f_minute .. "," .. fld_b_y .. ";" .. fld_sz .. ";fld_day3_start_minute;;" .. string.format("%02d", o.day3_start_minute) .. "]"
+	.. "field[" .. x.day3.fld_t_hour .. "," .. fld_b_y .. ";" .. fld_sz .. ";fld_day3_end_hour;bis;" .. string.format("%02d", o.day3_end_hour) .. "]"
+	.. "label[" .. x.day3.lab_t_colon .. "," .. lab_b_colon_y .. ";:]"
+	.. "field[" .. x.day3.fld_t_minute .. "," .. fld_b_y .. ";" .. fld_sz .. ";fld_day3_end_minute;;" .. string.format("%02d", o.day3_end_minute) .. "]"
 	local formspec_day4 = ""
-	.. "label[" .. lab_day4_x .. "," .. lab_b_y .. ";Do.]"
-	.. "field[" .. fld_day4_f_hour_x .. "," .. fld_b_y .. ";" .. fld_sz .. ";fld_day4_start_hour;von;" .. string.format("%02d", o.day4_start_hour) .. "]"
-	.. "label[" .. lab_day4_f_colon_x .. "," .. lab_b_colon_y .. ";:]"
-	.. "field[" .. fld_day4_f_minute_x .. "," .. fld_b_y .. ";" .. fld_sz .. ";fld_day4_start_minute;;" .. string.format("%02d", o.day4_start_minute) .. "]"
-	.. "field[" .. fld_day4_t_hour_x .. "," .. fld_b_y .. ";" .. fld_sz .. ";fld_day4_end_hour;bis;" .. string.format("%02d", o.day4_end_hour) .. "]"
-	.. "label[" .. lab_day4_t_colon_x .. "," .. lab_b_colon_y .. ";:]"
-	.. "field[" .. fld_day4_t_minute_x .. "," .. fld_b_y .. ";" .. fld_sz .. ";fld_day4_end_minute;;" .. string.format("%02d", o.day4_end_minute) .. "]"
+	.. "label[" .. x.day4.lab .. "," .. lab_b_y .. ";Do.]"
+	.. "field[" .. x.day4.fld_f_hour .. "," .. fld_b_y .. ";" .. fld_sz .. ";fld_day4_start_hour;von;" .. string.format("%02d", o.day4_start_hour) .. "]"
+	.. "label[" .. x.day4.lab_f_colon .. "," .. lab_b_colon_y .. ";:]"
+	.. "field[" .. x.day4.fld_f_minute .. "," .. fld_b_y .. ";" .. fld_sz .. ";fld_day4_start_minute;;" .. string.format("%02d", o.day4_start_minute) .. "]"
+	.. "field[" .. x.day4.fld_t_hour .. "," .. fld_b_y .. ";" .. fld_sz .. ";fld_day4_end_hour;bis;" .. string.format("%02d", o.day4_end_hour) .. "]"
+	.. "label[" .. x.day4.lab_t_colon .. "," .. lab_b_colon_y .. ";:]"
+	.. "field[" .. x.day4.fld_t_minute .. "," .. fld_b_y .. ";" .. fld_sz .. ";fld_day4_end_minute;;" .. string.format("%02d", o.day4_end_minute) .. "]"
 	local formspec_day5 = ""
-	.. "label[" .. lab_day5_x .. "," .. lab_b_y .. ";Fr.]"
-	.. "field[" .. fld_day5_f_hour_x .. "," .. fld_b_y .. ";" .. fld_sz .. ";fld_day5_start_hour;von;" .. string.format("%02d", o.day5_start_hour) .. "]"
-	.. "label[" .. lab_day5_f_colon_x .. "," .. lab_b_colon_y .. ";:]"
-	.. "field[" .. fld_day5_f_minute_x .. "," .. fld_b_y .. ";" .. fld_sz .. ";fld_day5_start_minute;;" .. string.format("%02d", o.day5_start_minute) .. "]"
-	.. "field[" .. fld_day5_t_hour_x .. "," .. fld_b_y .. ";" .. fld_sz .. ";fld_day5_end_hour;bis;" .. string.format("%02d", o.day5_end_hour) .. "]"
-	.. "label[" .. lab_day5_t_colon_x .. "," .. lab_b_colon_y .. ";:]"
-	.. "field[" .. fld_day5_t_minute_x .. "," .. fld_b_y .. ";" .. fld_sz .. ";fld_day5_end_minute;;" .. string.format("%02d", o.day5_end_minute) .. "]"
+	.. "label[" .. x.day5.lab .. "," .. lab_b_y .. ";Fr.]"
+	.. "field[" .. x.day5.fld_f_hour .. "," .. fld_b_y .. ";" .. fld_sz .. ";fld_day5_start_hour;von;" .. string.format("%02d", o.day5_start_hour) .. "]"
+	.. "label[" .. x.day5.lab_f_colon .. "," .. lab_b_colon_y .. ";:]"
+	.. "field[" .. x.day5.fld_f_minute .. "," .. fld_b_y .. ";" .. fld_sz .. ";fld_day5_start_minute;;" .. string.format("%02d", o.day5_start_minute) .. "]"
+	.. "field[" .. x.day5.fld_t_hour .. "," .. fld_b_y .. ";" .. fld_sz .. ";fld_day5_end_hour;bis;" .. string.format("%02d", o.day5_end_hour) .. "]"
+	.. "label[" .. x.day5.lab_t_colon .. "," .. lab_b_colon_y .. ";:]"
+	.. "field[" .. x.day5.fld_t_minute .. "," .. fld_b_y .. ";" .. fld_sz .. ";fld_day5_end_minute;;" .. string.format("%02d", o.day5_end_minute) .. "]"
 	local formspec_business_days = ""
 	.. formspec_day1
 	.. formspec_day2
@@ -283,30 +268,30 @@ local function show_gui(name)
 	.. formspec_day4
 	.. formspec_day5
 	local formspec_day6 = ""
-	.. "label[" .. lab_day1_x .. "," .. lab_w_y .. ";Sa.]"
-	.. "field[" .. fld_day1_f_hour_x .. "," .. fld_w_y .. ";" .. fld_sz .. ";fld_day6_start_hour;von;" .. string.format("%02d", o.day6_start_hour) .. "]"
-	.. "label[" .. lab_day1_f_colon_x .. "," .. lab_w_colon_y .. ";:]"
-	.. "field[" .. fld_day1_f_minute_x .. "," .. fld_w_y .. ";" .. fld_sz .. ";fld_day6_start_minute;;" .. string.format("%02d", o.day6_start_minute) .. "]"
-	.. "field[" .. fld_day1_t_hour_x .. "," .. fld_w_y .. ";" .. fld_sz .. ";fld_day6_end_hour;bis;" .. string.format("%02d", o.day6_end_hour) .. "]"
-	.. "label[" .. lab_day1_t_colon_x .. "," .. lab_w_colon_y .. ";:]"
-	.. "field[" .. fld_day1_t_minute_x .. "," .. fld_w_y .. ";" .. fld_sz .. ";fld_day6_end_minute;;" .. string.format("%02d", o.day6_end_minute) .. "]"
+	.. "label[" .. x.day1.lab .. "," .. lab_w_y .. ";Sa.]"
+	.. "field[" .. x.day1.fld_f_hour .. "," .. fld_w_y .. ";" .. fld_sz .. ";fld_day6_start_hour;von;" .. string.format("%02d", o.day6_start_hour) .. "]"
+	.. "label[" .. x.day1.lab_f_colon .. "," .. lab_w_colon_y .. ";:]"
+	.. "field[" .. x.day1.fld_f_minute .. "," .. fld_w_y .. ";" .. fld_sz .. ";fld_day6_start_minute;;" .. string.format("%02d", o.day6_start_minute) .. "]"
+	.. "field[" .. x.day1.fld_t_hour .. "," .. fld_w_y .. ";" .. fld_sz .. ";fld_day6_end_hour;bis;" .. string.format("%02d", o.day6_end_hour) .. "]"
+	.. "label[" .. x.day1.lab_t_colon .. "," .. lab_w_colon_y .. ";:]"
+	.. "field[" .. x.day1.fld_t_minute .. "," .. fld_w_y .. ";" .. fld_sz .. ";fld_day6_end_minute;;" .. string.format("%02d", o.day6_end_minute) .. "]"
 	local formspec_day0 = ""
-	.. "label[" .. lab_day2_x .. "," .. lab_w_y .. ";So.]"
-	.. "field[" .. fld_day2_f_hour_x .. "," .. fld_w_y .. ";" .. fld_sz .. ";fld_day0_start_hour;von;" .. string.format("%02d", o.day0_start_hour) .. "]"
-	.. "label[" .. lab_day2_f_colon_x .. "," .. lab_w_colon_y .. ";:]"
-	.. "field[" .. fld_day2_f_minute_x .. "," .. fld_w_y .. ";" .. fld_sz .. ";fld_day0_start_minute;;" .. string.format("%02d", o.day0_start_minute) .. "]"
-	.. "field[" .. fld_day2_t_hour_x .. "," .. fld_w_y .. ";" .. fld_sz .. ";fld_day0_end_hour;bis;" .. string.format("%02d", o.day0_end_hour) .. "]"
-	.. "label[" .. lab_day2_t_colon_x .. "," .. lab_w_colon_y .. ";:]"
-	.. "field[" .. fld_day2_t_minute_x .. "," .. fld_w_y .. ";" .. fld_sz .. ";fld_day0_end_minute;;" .. string.format("%02d", o.day0_end_minute) .. "]"
+	.. "label[" .. x.day2.lab .. "," .. lab_w_y .. ";So.]"
+	.. "field[" .. x.day2.fld_f_hour .. "," .. fld_w_y .. ";" .. fld_sz .. ";fld_day0_start_hour;von;" .. string.format("%02d", o.day0_start_hour) .. "]"
+	.. "label[" .. x.day2.lab_f_colon .. "," .. lab_w_colon_y .. ";:]"
+	.. "field[" .. x.day2.fld_f_minute .. "," .. fld_w_y .. ";" .. fld_sz .. ";fld_day0_start_minute;;" .. string.format("%02d", o.day0_start_minute) .. "]"
+	.. "field[" .. x.day2.fld_t_hour .. "," .. fld_w_y .. ";" .. fld_sz .. ";fld_day0_end_hour;bis;" .. string.format("%02d", o.day0_end_hour) .. "]"
+	.. "label[" .. x.day2.lab_t_colon .. "," .. lab_w_colon_y .. ";:]"
+	.. "field[" .. x.day2.fld_t_minute .. "," .. fld_w_y .. ";" .. fld_sz .. ";fld_day0_end_minute;;" .. string.format("%02d", o.day0_end_minute) .. "]"
 	local formspec_exception = (o.exception_today
 			and ""
-				.. "label[" .. lab_day1_x .. "," .. lab_e_y .. ";Heute]"
-				.. "field[" .. fld_day1_f_hour_x .. "," .. fld_e_y .. ";" .. fld_sz .. ";fld_exception_start_hour;von;" .. string.format("%02d", o.exception_start_hour) .. "]"
-				.. "label[" .. lab_day1_f_colon_x .. "," .. lab_e_colon_y .. ";:]"
-				.. "field[" .. fld_day1_f_minute_x .. "," .. fld_e_y .. ";" .. fld_sz .. ";fld_exception_start_minute;;" .. string.format("%02d", o.exception_start_minute) .. "]"
-				.. "field[" .. fld_day1_t_hour_x .. "," .. fld_e_y .. ";" .. fld_sz .. ";fld_exception_end_hour;bis;" .. string.format("%02d", o.exception_end_hour) .. "]"
-				.. "label[" .. lab_day1_t_colon_x .. "," .. lab_e_colon_y .. ";:]"
-				.. "field[" .. fld_day1_t_minute_x .. "," .. fld_e_y .. ";" .. fld_sz .. ";fld_exception_end_minute;;" .. string.format("%02d", o.exception_end_minute) .. "]"
+				.. "label[" .. x.day1.lab .. "," .. lab_e_y .. ";Heute]"
+				.. "field[" .. x.day1.fld_f_hour .. "," .. fld_e_y .. ";" .. fld_sz .. ";fld_exception_start_hour;von;" .. string.format("%02d", o.exception_start_hour) .. "]"
+				.. "label[" .. x.day1.lab_f_colon .. "," .. lab_e_colon_y .. ";:]"
+				.. "field[" .. x.day1.fld_f_minute .. "," .. fld_e_y .. ";" .. fld_sz .. ";fld_exception_start_minute;;" .. string.format("%02d", o.exception_start_minute) .. "]"
+				.. "field[" .. x.day1.fld_t_hour .. "," .. fld_e_y .. ";" .. fld_sz .. ";fld_exception_end_hour;bis;" .. string.format("%02d", o.exception_end_hour) .. "]"
+				.. "label[" .. x.day1.lab_t_colon .. "," .. lab_e_colon_y .. ";:]"
+				.. "field[" .. x.day1.fld_t_minute .. "," .. fld_e_y .. ";" .. fld_sz .. ";fld_exception_end_minute;;" .. string.format("%02d", o.exception_end_minute) .. "]"
 			or "image_button[0.34,4.5296922410056;4.205,0.7835;;add_exception;Ausnahmeregelung hinzufügen]"
 		)
 	local formspec = "size[18.01,7.9267895878525]"
@@ -315,7 +300,7 @@ local function show_gui(name)
 	.. formspec_day6
 	.. formspec_day0
 	.. formspec_exception
-	.. "label[" .. lab_day1_x .. ",5.4833116601647;Einstellungen]"
+	.. "label[" .. x.day1.lab .. ",5.4833116601647;Einstellungen]"
 	.. "label[0.34," .. lab_close_y .. ";Spieler ]"
 	.. "field[1.6," .. fld_close_y .. ";" .. fld_sz .. ";fld_warn_offset;;" .. o.warn_offset .. "]"
 	.. "label[2.18," .. lab_close_y .. ";Minuten vor Ablauf der Zeit alle]"
