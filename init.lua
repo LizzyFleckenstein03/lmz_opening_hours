@@ -176,40 +176,63 @@ local function on_join(name)
 end
 
 local function show_gui(name)
-	local fld_w = 1.0
+	local fld_w = 0.88
 	local fld_h = 0.82429501084599
 	local fld_sz = fld_w .. "," .. fld_h
+	local inline_off = 0.2427394885132
 	local lab_close_y = 6.3935847420893
 	local fld_close_y = lab_close_y + 0.2427394885132
 	local lab_day1_x = 0.1
-	local fld_day1_f_x = 0.64
-	local fld_day1_t_x = 1.6
-	local time_off = 1.1530125704378
+	local pre_colon_off = 0.4
+	local fld_day1_f_hour_x = 0.64
+	local minute_off = 0.04
+	local to_off = 1.24
+	local fld_day1_f_minute_x = fld_day1_f_hour_x + fld_w - minute_off
+	local lab_day1_f_colon_x = fld_day1_f_minute_x - pre_colon_off
+	local fld_day1_t_hour_x = lab_day1_f_colon_x + to_off
+	local fld_day1_t_minute_x = fld_day1_t_hour_x + fld_w - minute_off
+	local lab_day1_t_colon_x = fld_day1_t_minute_x - pre_colon_off
+	local below_off = 1.1530125704378
 	local lab_b_y = 0.28175119202427
-	local fld_b_y = lab_b_y + time_off
+	local fld_b_y = lab_b_y + below_off
+	local lab_b_colon_y = fld_b_y - inline_off
 	local lab_w_y = 2.0156046814044
-	local fld_w_y = lab_w_y + time_off
+	local fld_w_y = lab_w_y + below_off
+	local lab_w_colon_y = fld_w_y - inline_off
 	local lab_e_y = 3.7494581707846
-	local fld_e_y = lab_e_y + time_off
+	local fld_e_y = lab_e_y + below_off
+	local lab_e_colon_y = fld_e_y - inline_off
 	local o = opening_hours
 	local formspec = "size[10.01,7.9267895878525]"
 	.. "label[-0.14,-0.23840485478977;Öffnungszeiten]"
 	.. "label[" .. lab_day1_x .. "," .. lab_b_y .. ";Mo.-Fr.]"
-	.. "field[" .. fld_day1_f_x .. "," .. fld_b_y .. ";" .. fld_sz .. ";fld_day1_start_hour;von;" .. o.day1_start_hour .. "]"
-	.. "field[" .. fld_day1_t_x .. "," .. fld_b_y .. ";" .. fld_sz .. ";fld_day1_end_hour;bis;" .. o.day1_end_hour .. "]"
+	.. "field[" .. fld_day1_f_hour_x .. "," .. fld_b_y .. ";" .. fld_sz .. ";fld_day1_start_hour;von;" .. string.format("%02d", o.day1_start_hour) .. "]"
+	.. "label[" .. lab_day1_f_colon_x .. "," .. lab_b_colon_y .. ";:]"
+	.. "field[" .. fld_day1_f_minute_x .. "," .. fld_b_y .. ";" .. fld_sz .. ";fld_day1_start_minute;;" .. string.format("%02d", o.day1_start_minute) .. "]"
+	.. "field[" .. fld_day1_t_hour_x .. "," .. fld_b_y .. ";" .. fld_sz .. ";fld_day1_end_hour;bis;" .. string.format("%02d", o.day1_end_hour) .. "]"
+	.. "label[" .. lab_day1_t_colon_x .. "," .. lab_b_colon_y .. ";:]"
+	.. "field[" .. fld_day1_t_minute_x .. "," .. fld_b_y .. ";" .. fld_sz .. ";fld_day1_end_minute;;" .. string.format("%02d", o.day1_end_minute) .. "]"
 	.. "label[" .. lab_day1_x .. "," .. lab_w_y .. ";Sa.-So.]"
-	.. "field[" .. fld_day1_f_x .. "," .. fld_w_y .. ";" .. fld_sz .. ";fld_day0_start_hour;von;" .. o.day0_start_hour .. "]"
-	.. "field[" .. fld_day1_t_x .. "," .. fld_w_y .. ";" .. fld_sz .. ";fld_day0_end_hour;bis;" .. o.day0_end_hour .. "]"
+	.. "field[" .. fld_day1_f_hour_x .. "," .. fld_w_y .. ";" .. fld_sz .. ";fld_day0_start_hour;von;" .. string.format("%02d", o.day0_start_hour) .. "]"
+	.. "label[" .. lab_day1_f_colon_x .. "," .. lab_w_colon_y .. ";:]"
+	.. "field[" .. fld_day1_f_minute_x .. "," .. fld_w_y .. ";" .. fld_sz .. ";fld_day0_start_minute;;" .. string.format("%02d", o.day0_start_minute) .. "]"
+	.. "field[" .. fld_day1_t_hour_x .. "," .. fld_w_y .. ";" .. fld_sz .. ";fld_day0_end_hour;bis;" .. string.format("%02d", o.day0_end_hour) .. "]"
+	.. "label[" .. lab_day1_t_colon_x .. "," .. lab_w_colon_y .. ";:]"
+	.. "field[" .. fld_day1_t_minute_x .. "," .. fld_w_y .. ";" .. fld_sz .. ";fld_day0_end_minute;;" .. string.format("%02d", o.day0_end_minute) .. "]"
 	.. "label[" .. lab_day1_x .. "," .. lab_e_y .. ";Heute]"
 	.. (o.exception_today
 			and ""
-				.. "field[" .. fld_day1_f_x .. "," .. fld_e_y .. ";" .. fld_sz .. ";fld_exception_start_hour;von;" .. o.exception_start_hour .. "]"
-				.. "field[" .. fld_day1_t_x .. "," .. fld_e_y .. ";" .. fld_sz .. ";fld_exception_end_hour;bis;" .. o.exception_end_hour .. "]"
+				.. "field[" .. fld_day1_f_hour_x .. "," .. fld_e_y .. ";" .. fld_sz .. ";fld_exception_start_hour;von;" .. string.format("%02d", o.exception_start_hour) .. "]"
+				.. "label[" .. lab_day1_f_colon_x .. "," .. lab_e_colon_y .. ";:]"
+				.. "field[" .. fld_day1_f_minute_x .. "," .. fld_e_y .. ";" .. fld_sz .. ";fld_exception_start_minute;;" .. string.format("%02d", o.exception_start_minute) .. "]"
+				.. "field[" .. fld_day1_t_hour_x .. "," .. fld_e_y .. ";" .. fld_sz .. ";fld_exception_end_hour;bis;" .. string.format("%02d", o.exception_end_hour) .. "]"
+				.. "label[" .. lab_day1_t_colon_x .. "," .. lab_e_colon_y .. ";:]"
+				.. "field[" .. fld_day1_t_minute_x .. "," .. fld_e_y .. ";" .. fld_sz .. ";fld_exception_end_minute;;" .. string.format("%02d", o.exception_end_minute) .. "]"
 			or "image_button[0.34,4.5296922410056;4.205,0.7835;;add_exception;Ausnahmeregelung hinzufügen]"
 		)
 	.. "label[" .. lab_day1_x .. ",5.4833116601647;Einstellungen]"
 	.. "label[0.34," .. lab_close_y .. ";Spieler ]"
-	.. "field[" .. fld_day1_t_x .. "," .. fld_close_y .. ";" .. fld_sz .. ";fld_warn_offset;;" .. o.warn_offset .. "]"
+	.. "field[1.6," .. fld_close_y .. ";" .. fld_sz .. ";fld_warn_offset;;" .. o.warn_offset .. "]"
 	.. "label[2.18," .. lab_close_y .. ";Minuten vor Ablauf der Zeit alle]"
 	.. "field[6.0," .. fld_close_y .. ";" .. fld_sz .. ";fld_warn_interval;;" .. o.warn_interval .. "]"
 	.. "label[6.6," .. lab_close_y .. ";Minuten warnen.]"
