@@ -3,7 +3,39 @@ local storage = minetest.get_mod_storage()
 
 opening_hours = {}
 
-local opening_hours_default = {weekday_start = 14, weekday_end = 21, weekend_start = 8, weekend_end = 21, warn_offset = 15, warn_interval = 5}
+local opening_hours_default = {
+	version = 2,
+	day0_start_hour = 8,
+	day0_start_minute = 0,
+	day0_end_hour = 21,
+	day0_end_minute = 0,
+	day1_start_hour = 14,
+	day1_start_minute = 0,
+	day1_end_hour = 21,
+	day1_end_minute = 0,
+	day2_start_hour = 14,
+	day2_start_minute = 0,
+	day2_end_hour = 21,
+	day2_end_minute = 0,
+	day3_start_hour = 14,
+	day3_start_minute = 0,
+	day3_end_hour = 21,
+	day3_end_minute = 0,
+	day4_start_hour = 14,
+	day4_start_minute = 0,
+	day4_end_hour = 21,
+	day4_end_minute = 0,
+	day5_start_hour = 14,
+	day5_start_minute = 0,
+	day5_end_hour = 21,
+	day5_end_minute = 0,
+	day6_start_hour = 8,
+	day6_start_minute = 0,
+	day6_end_hour = 21,
+	day6_end_minute = 0,
+	warn_offset = 15,
+	warn_interval = 5
+}
 
 local warn_cooldown = 0
 
@@ -20,44 +52,93 @@ local function is_weekend()
 	return d == "0" or d == "6"
 end
 
+local function upgrade_configuration(old)
+	local new = {
+		version = 2,
+		day0_start_hour = old.weekend_start,
+		day0_start_minute = 0,
+		day0_end_hour = old.weekend_end,
+		day0_end_minute = 0,
+		day1_start_hour = old.weekday_start,
+		day1_start_minute = 0,
+		day1_end_hour = old.weekday_end,
+		day1_end_minute = 0,
+		day2_start_hour = old.weekday_start,
+		day2_start_minute = 0,
+		day2_end_hour = old.weekday_end,
+		day2_end_minute = 0,
+		day3_start_hour = old.weekday_start,
+		day3_start_minute = 0,
+		day3_end_hour = old.weekday_end,
+		day3_end_minute = 0,
+		day4_start_hour = old.weekday_start,
+		day4_start_minute = 0,
+		day4_end_hour = old.weekday_end,
+		day4_end_minute = 0,
+		day5_start_hour = old.weekday_start,
+		day5_start_minute = 0,
+		day5_end_hour = old.weekday_end,
+		day5_end_minute = 0,
+		day6_start_hour = old.weekend_start,
+		day6_start_minute = 0,
+		day6_end_hour = old.weekend_end,
+		day6_end_minute = 0,
+		warn_offset = old.warn_offset,
+		warn_interval = old.warn_interval,
+	}
+	if old.today then
+		new.exception_today = old.today
+		new.exception_start_hour = old.today_start
+		new.exception_start_minute = 0
+		new.exception_end_hour = old.today_end
+		new.exception_end_minute = 0
+	end
+	return new
+end
+
 local function save_data()
 	storage:from_table({fields = opening_hours})
 end
 
 local function load_data()
 	opening_hours = storage:to_table().fields
-	if not opening_hours.weekday_start then
+	if opening_hours.weekday_start then
+		opening_hours = upgrade_configuration(opening_hours)
+	elseif not opening_hours.version then
 		opening_hours = opening_hours_default
 	end
 end
 
 local function reset_execption()
-	opening_hours.today = nil
-	opening_hours.today_start = nil
-	opening_hours.today_end = nil
+	opening_hours.exception_today = nil
 end
 
 local function opening_today()
-	local today = opening_hours.today
-	if today and today == get_date_formated() then
-		return opening_hours.today_start, opening_hours.today_end
+	local exception = opening_hours.exception_today
+	local day_key
+	if exception and exception == get_date_formated() then
+		day_key = "exception"
 	elseif is_weekend() then
-		return opening_hours.weekend_start, opening_hours.weekend_end
+		day_key = "day0"
 	else
-		return opening_hours.weekday_start, opening_hours.weekday_end
+		day_key = "day1"
 	end
+	return opening_hours[day_key .. "_start_hour"], opening_hours[day_key .. "_end_hour"]
 end
 
 local function create_exception()
 	local today_start, today_end = opening_today()
-	opening_hours.today = get_date_formated()
-	opening_hours.today_start = today_start
-	opening_hours.today_end = today_end
+	opening_hours.exception_today = get_date_formated()
+	opening_hours.exception_start_hour = today_start
+	opening_hours.exception_start_minute = 0
+	opening_hours.exception_end_hour = today_end
+	opening_hours.exception_end_minute = 0
 end
 
 local function tick(dtime)
 	local d = get_date()
-	if opening_hours.today and opening_hours.today ~= get_date_formated() then
+	local exception = opening_hours.exception_today
+	if exception and exception ~= get_date_formated() then
 		reset_execption()
 	end
 	local today_start, today_end = opening_today()
@@ -114,16 +195,16 @@ local function show_gui(name)
 	local formspec = "size[10.01,7.9267895878525]"
 	.. "label[-0.14,-0.23840485478977;Öffnungszeiten]"
 	.. "label[" .. lab_day1_x .. "," .. lab_b_y .. ";Mo.-Fr.]"
-	.. "field[" .. fld_day1_f_x .. "," .. fld_b_y .. ";" .. fld_sz .. ";fld_weekday_start;von;" .. o.weekday_start .. "]"
-	.. "field[" .. fld_day1_t_x .. "," .. fld_b_y .. ";" .. fld_sz .. ";fld_weekday_end;bis;" .. o.weekday_end .. "]"
+	.. "field[" .. fld_day1_f_x .. "," .. fld_b_y .. ";" .. fld_sz .. ";fld_day1_start_hour;von;" .. o.day1_start_hour .. "]"
+	.. "field[" .. fld_day1_t_x .. "," .. fld_b_y .. ";" .. fld_sz .. ";fld_day1_end_hour;bis;" .. o.day1_end_hour .. "]"
 	.. "label[" .. lab_day1_x .. "," .. lab_w_y .. ";Sa.-So.]"
-	.. "field[" .. fld_day1_f_x .. "," .. fld_w_y .. ";" .. fld_sz .. ";fld_weekend_start;von;" .. o.weekend_start .. "]"
-	.. "field[" .. fld_day1_t_x .. "," .. fld_w_y .. ";" .. fld_sz .. ";fld_weekend_end;bis;" .. o.weekend_end .. "]"
+	.. "field[" .. fld_day1_f_x .. "," .. fld_w_y .. ";" .. fld_sz .. ";fld_day0_start_hour;von;" .. o.day0_start_hour .. "]"
+	.. "field[" .. fld_day1_t_x .. "," .. fld_w_y .. ";" .. fld_sz .. ";fld_day0_end_hour;bis;" .. o.day0_end_hour .. "]"
 	.. "label[" .. lab_day1_x .. "," .. lab_e_y .. ";Heute]"
-	.. (o.today
+	.. (o.exception_today
 			and ""
-				.. "field[" .. fld_day1_f_x .. "," .. fld_e_y .. ";" .. fld_sz .. ";fld_today_start;von;" .. o.today_start .. "]"
-				.. "field[" .. fld_day1_t_x .. "," .. fld_e_y .. ";" .. fld_sz .. ";fld_today_end;bis;" .. o.today_end .. "]"
+				.. "field[" .. fld_day1_f_x .. "," .. fld_e_y .. ";" .. fld_sz .. ";fld_exception_start_hour;von;" .. o.exception_start_hour .. "]"
+				.. "field[" .. fld_day1_t_x .. "," .. fld_e_y .. ";" .. fld_sz .. ";fld_exception_end_hour;bis;" .. o.exception_end_hour .. "]"
 			or "image_button[0.34,4.5296922410056;4.205,0.7835;;add_exception;Ausnahmeregelung hinzufügen]"
 		)
 	.. "label[" .. lab_day1_x .. ",5.4833116601647;Einstellungen]"
@@ -144,8 +225,10 @@ local function progress_gui_input(player, formname, fields)
 		create_exception()
 	end
 	for k, v in pairs(fields) do
-		if k:sub(1, 4) == "fld_" and tonumber(v) then
-			opening_hours[k:gsub("fld_", "")] = v
+		if k:sub(1, 4) == "fld_" then
+			local field = k:gsub("fld_", "")
+			local old = opening_hours[field]
+			opening_hours[field] = tonumber(v) or old
 		end
 	end
 	if not fields.quit and not fields.close then show_gui(name) end
