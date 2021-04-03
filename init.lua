@@ -103,6 +103,11 @@ local function load_data()
 	elseif not opening_hours.version then
 		opening_hours = opening_hours_default
 	end
+	for k, v in pairs(opening_hours) do
+		if k ~= "exception_today" then
+			opening_hours[k] = tonumber(v)
+		end
+	end
 end
 
 local function reset_execption()
@@ -231,6 +236,33 @@ local function show_gui(name)
 		[5] = S("Fr."),
 		[6] = S("Sa.")
 	}
+	local player_info = minetest.get_player_information(name)
+	local warning_config_translation_string = S(
+		"@1 minutes before closing, warn the players every @2 minutes.",
+		"<warn_offset>",
+		"<warn_interval>"
+	)
+	local warning_config = minetest.get_translated_string(
+		player_info.lang_code,
+		warning_config_translation_string
+	) .. "<"
+	local formspec_warning = ""
+	local warning_x = 0.34
+	for fragment in warning_config:gmatch("([^<>]+<?)") do
+		local label = fragment:match("<$")
+		if label then
+			fragment = fragment:gsub("<$", "")
+		end
+		if label then
+			formspec_warning = formspec_warning ..
+			"label[" .. warning_x .. "," .. lab_close_y .. ";" .. fragment .. "]"
+			warning_x = warning_x + 0.125 * fragment:len()
+		else
+			formspec_warning = formspec_warning ..
+			"field[" .. (warning_x + 0.2) .. "," .. fld_close_y .. ";" .. fld_sz .. ";fld_" .. fragment .. ";;" .. o[fragment] .. "]"
+			warning_x = warning_x + 0.6
+		end
+	end
 	local formspec_business_days = ""
 	for day = 1, 5, 1 do
 		formspec_business_days = formspec_business_days
@@ -244,7 +276,7 @@ local function show_gui(name)
 	end
 	local formspec_weekend = ""
 	for col = 1, 2, 1 do
-		day = (5 + col) % 7
+		local day = (5 + col) % 7
 		formspec_weekend = formspec_weekend
 		.. "label[" .. x["day" .. col].lab .. "," .. lab_w_y .. ";" .. day_abbreviations[day] .. "]"
 		.. "field[" .. x["day" .. col].fld_f_hour .. "," .. fld_w_y .. ";" .. fld_sz .. ";fld_day" .. day .. "_start_hour;" .. S("from") .. ";" .. string.format("%02d", o["day" .. day .. "_start_hour"]) .. "]"
@@ -271,11 +303,7 @@ local function show_gui(name)
 	.. formspec_weekend
 	.. formspec_exception
 	.. "label[" .. x.day1.lab .. ",5.4833116601647;" .. S("Settings") .. "]"
-	.. "label[0.34," .. lab_close_y .. ";Spieler ]"
-	.. "field[1.6," .. fld_close_y .. ";" .. fld_sz .. ";fld_warn_offset;;" .. o.warn_offset .. "]"
-	.. "label[2.18," .. lab_close_y .. ";Minuten vor Ablauf der Zeit alle]"
-	.. "field[6.0," .. fld_close_y .. ";" .. fld_sz .. ";fld_warn_interval;;" .. o.warn_interval .. "]"
-	.. "label[6.6," .. lab_close_y .. ";Minuten warnen.]"
+	.. formspec_warning
 	.. "image_button[5.14,7.6072821846554;2.605,0.7835;;save;" .. S("Save") .. "]"
 	.. "image_button_exit[7.62,7.6072821846554;2.605,0.7835;;close;" .. S("Close") .. "]"
 	minetest.show_formspec(name, "lmz_opening_hours:gui", formspec)

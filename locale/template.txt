@@ -23,3 +23,4 @@ The server is closing!=
 The server will close in @1 minutes.=
 Save=
 Close=
+@1 minutes before closing, warn the players every @2 minutes.=
