@@ -38,7 +38,7 @@ local function reset_execption()
 end
 
 local function opening_today()
-	local today = opening_hours_today
+	local today = opening_hours.today
 	if today and today == get_date_formated() then
 		return opening_hours.today_start, opening_hours.today_end
 	elseif is_weekend() then
