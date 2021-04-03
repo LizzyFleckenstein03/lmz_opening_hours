@@ -55,36 +55,36 @@ end
 local function upgrade_configuration(old)
 	local new = {
 		version = 2,
-		day0_start_hour = old.weekend_start,
+		day0_start_hour = tonumber(old.weekend_start),
 		day0_start_minute = 0,
-		day0_end_hour = old.weekend_end,
+		day0_end_hour = tonumber(old.weekend_end),
 		day0_end_minute = 0,
-		day1_start_hour = old.weekday_start,
+		day1_start_hour = tonumber(old.weekday_start),
 		day1_start_minute = 0,
-		day1_end_hour = old.weekday_end,
+		day1_end_hour = tonumber(old.weekday_end),
 		day1_end_minute = 0,
-		day2_start_hour = old.weekday_start,
+		day2_start_hour = tonumber(old.weekday_start),
 		day2_start_minute = 0,
-		day2_end_hour = old.weekday_end,
+		day2_end_hour = tonumber(old.weekday_end),
 		day2_end_minute = 0,
-		day3_start_hour = old.weekday_start,
+		day3_start_hour = tonumber(old.weekday_start),
 		day3_start_minute = 0,
-		day3_end_hour = old.weekday_end,
+		day3_end_hour = tonumber(old.weekday_end),
 		day3_end_minute = 0,
-		day4_start_hour = old.weekday_start,
+		day4_start_hour = tonumber(old.weekday_start),
 		day4_start_minute = 0,
-		day4_end_hour = old.weekday_end,
+		day4_end_hour = tonumber(old.weekday_end),
 		day4_end_minute = 0,
-		day5_start_hour = old.weekday_start,
+		day5_start_hour = tonumber(old.weekday_start),
 		day5_start_minute = 0,
-		day5_end_hour = old.weekday_end,
+		day5_end_hour = tonumber(old.weekday_end),
 		day5_end_minute = 0,
-		day6_start_hour = old.weekend_start,
+		day6_start_hour = tonumber(old.weekend_start),
 		day6_start_minute = 0,
-		day6_end_hour = old.weekend_end,
+		day6_end_hour = tonumber(old.weekend_end),
 		day6_end_minute = 0,
-		warn_offset = old.warn_offset,
-		warn_interval = old.warn_interval,
+		warn_offset = tonumber(old.warn_offset),
+		warn_interval = tonumber(old.warn_interval)
 	}
 	if old.today then
 		new.exception_today = old.today
@@ -123,16 +123,21 @@ local function opening_today()
 	else
 		day_key = "day1"
 	end
-	return opening_hours[day_key .. "_start_hour"], opening_hours[day_key .. "_end_hour"]
+	return {
+		start_hour = opening_hours[day_key .. "_start_hour"],
+		start_minute = opening_hours[day_key .. "_start_minute"],
+		end_hour = opening_hours[day_key .. "_end_hour"],
+		end_minute = opening_hours[day_key .. "_end_minute"]
+	}
 end
 
 local function create_exception()
-	local today_start, today_end = opening_today()
+	local today = opening_today()
 	opening_hours.exception_today = get_date_formated()
-	opening_hours.exception_start_hour = today_start
-	opening_hours.exception_start_minute = 0
-	opening_hours.exception_end_hour = today_end
-	opening_hours.exception_end_minute = 0
+	opening_hours.exception_start_hour = today.start_hour
+	opening_hours.exception_start_minute = today.start_minute
+	opening_hours.exception_end_hour = today.end_hour
+	opening_hours.exception_end_minute = today.end_minute
 end
 
 local function tick(dtime)
@@ -141,19 +146,19 @@ local function tick(dtime)
 	if exception and exception ~= get_date_formated() then
 		reset_execption()
 	end
-	local today_start, today_end = opening_today()
-	local diff = tonumber(today_end) - d.hour
-	if diff == 1 then
-		local minutes_remaining = (60 - d.min)
-		if minutes_remaining <= tonumber(opening_hours.warn_offset) then
-			if warn_cooldown <= 0 then
-				minetest.chat_send_all(minetest.colorize("#FF4D00", "Der Server schießt in " .. minutes_remaining .. " Minuten."))
-				warn_cooldown = tonumber(opening_hours.warn_interval) * 60
-			else
-				warn_cooldown = warn_cooldown - dtime
-			end
+	local today = opening_today()
+	local end_time = today.end_hour * 60 + today.end_minute
+	local now_time = d.hour * 60 + d.min
+	local minutes_remaining = end_time - now_time
+	if 0 < minutes_remaining
+	and minutes_remaining <= opening_hours.warn_offset then
+		if warn_cooldown <= 0 then
+			minetest.chat_send_all(minetest.colorize("#FF4D00", "Der Server schießt in " .. minutes_remaining .. " Minuten."))
+			warn_cooldown = tonumber(opening_hours.warn_interval) * 60
+		else
+			warn_cooldown = warn_cooldown - dtime
 		end
-	elseif diff <= 0 then
+	elseif minutes_remaining <= 0 then
 		for _, player in pairs(minetest.get_connected_players()) do
 			local name = player:get_player_name()
 			if not minetest.check_player_privs(name, {server = true}) then
@@ -165,12 +170,15 @@ end
 
 local function on_join(name)
 	if minetest.check_player_privs(name, {server = true}) then return end
-	local today_start, today_end = opening_today()
+	local today = opening_today()
  	local d = get_date()
-	local diff = tonumber(today_start) - d.hour
+	local start_time = today.start_hour * 60 + today.start_minute
+	local end_time = today.end_hour * 60 + today.end_minute
+	local now_time = d.hour * 60 + d.min
+	local diff = start_time - now_time
 	if diff > 0 then
-		return "Besuch erfolgte außerhalb der Öffnungszeiten. Der Server hat in " .. math.ceil(diff) .. " Stunde(n) wieder geöffnet."
-	elseif tonumber(today_end) <= d.hour then
+		return "Besuch erfolgte außerhalb der Öffnungszeiten. Der Server hat in " .. math.ceil(diff / 60) .. " Stunde(n) wieder geöffnet."
+	elseif end_time <= now_time then
 		return "Besuch erfolgte außerhalb der Öffnungszeiten. Der Server hat bereits geschlossen und hat Morgen wieder geöffnet."
 	end
 end
