@@ -175,6 +175,8 @@ local function on_join(name)
 	end
 end
 
+local minute_step = 5
+
 local function show_gui(name)
 	local fld_w = 0.88
 	local fld_h = 0.82429501084599
@@ -252,6 +254,37 @@ local function progress_gui_input(player, formname, fields)
 			local field = k:gsub("fld_", "")
 			local old = opening_hours[field]
 			opening_hours[field] = tonumber(v) or old
+		end
+	end
+	for k, v in pairs(opening_hours) do
+		if k:match("_hour$") then
+			opening_hours[k] = math.max(0, math.min(23, v))
+		elseif k:match("_minute$") then
+			opening_hours[k] = math.max(
+				0,
+				math.min(
+					60 - minute_step,
+					minute_step * math.floor(
+						v / minute_step + 0.5
+					)
+				)
+			)
+		end
+	end
+	for k, v in pairs(opening_hours) do
+		if k:match("_end_hour$") then
+			local start = opening_hours[k:gsub("_end_", "_start_")]
+			if start > v then
+				opening_hours[k] = start
+			end
+		elseif k:match("_end_minute$") then
+			local hour_k = k:gsub("_minute$", "_hour")
+			local hour_start_k = hour_k:gsub("_end_", "_start_")
+			local start_k = k:gsub("_end_", "_start_")
+			if opening_hours[hour_start_k] >= opening_hours[hour_k]
+			and opening_hours[start_k] > v then
+				opening_hours[k] = opening_hours[start_k]
+			end
 		end
 	end
 	if not fields.quit and not fields.close then show_gui(name) end
