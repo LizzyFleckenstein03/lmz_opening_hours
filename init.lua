@@ -1,5 +1,6 @@
 local modname = minetest.get_current_modname()
 local storage = minetest.get_mod_storage()
+local S = minetest.get_translator("lmz_opening_hours")
 
 opening_hours = {}
 
@@ -147,7 +148,7 @@ local function tick(dtime)
 	if 0 < minutes_remaining
 	and minutes_remaining <= opening_hours.warn_offset then
 		if warn_cooldown <= 0 then
-			minetest.chat_send_all(minetest.colorize("#FF4D00", "Der Server schießt in " .. minutes_remaining .. " Minuten."))
+			minetest.chat_send_all(minetest.colorize("#FF4D00", S("The server will close in @1 minutes.", minutes_remaining)))
 			warn_cooldown = tonumber(opening_hours.warn_interval) * 60
 		else
 			warn_cooldown = warn_cooldown - dtime
@@ -156,7 +157,7 @@ local function tick(dtime)
 		for _, player in pairs(minetest.get_connected_players()) do
 			local name = player:get_player_name()
 			if not minetest.check_player_privs(name, {server = true}) then
-				minetest.kick_player(name, "Der Server schließt!")
+				minetest.kick_player(name, S("The server is closing!"))
 			end
 		end
 	end
@@ -171,9 +172,9 @@ local function on_join(name)
 	local now_time = d.hour * 60 + d.min
 	local diff = start_time - now_time
 	if diff > 0 then
-		return "Besuch erfolgte außerhalb der Öffnungszeiten. Der Server hat in " .. math.ceil(diff / 60) .. " Stunde(n) wieder geöffnet."
+		return S("You visited outside of the opening hours") .. ". " .. S("The server will open again in @1 hours", math.ceil(diff / 60)) .. "."
 	elseif end_time <= now_time then
-		return "Besuch erfolgte außerhalb der Öffnungszeiten. Der Server hat bereits geschlossen und hat Morgen wieder geöffnet."
+		return S("You visited outside of the opening hours") .. ". " .. S("The server has already closed and will open again tomorrow") .. "."
 	end
 end
 
@@ -222,22 +223,22 @@ local function show_gui(name)
 	local lab_e_colon_y = fld_e_y - inline_off
 	local o = opening_hours
 	local day_abbreviations = {
-		[0] = "So.",
-		[1] = "Mo.",
-		[2] = "Di.",
-		[3] = "Mi.",
-		[4] = "Do.",
-		[5] = "Fr.",
-		[6] = "Sa."
+		[0] = S("Su."),
+		[1] = S("Mo."),
+		[2] = S("Tu."),
+		[3] = S("We."),
+		[4] = S("Th."),
+		[5] = S("Fr."),
+		[6] = S("Sa.")
 	}
 	local formspec_business_days = ""
 	for day = 1, 5, 1 do
 		formspec_business_days = formspec_business_days
 		.. "label[" .. x["day" .. day].lab .. "," .. lab_b_y .. ";" .. day_abbreviations[day] .. "]"
-		.. "field[" .. x["day" .. day].fld_f_hour .. "," .. fld_b_y .. ";" .. fld_sz .. ";fld_day" .. day .. "_start_hour;von;" .. string.format("%02d", o["day" .. day .. "_start_hour"]) .. "]"
+		.. "field[" .. x["day" .. day].fld_f_hour .. "," .. fld_b_y .. ";" .. fld_sz .. ";fld_day" .. day .. "_start_hour;" .. S("from") .. ";" .. string.format("%02d", o["day" .. day .. "_start_hour"]) .. "]"
 		.. "label[" .. x["day" .. day].lab_f_colon .. "," .. lab_b_colon_y .. ";:]"
 		.. "field[" .. x["day" .. day].fld_f_minute .. "," .. fld_b_y .. ";" .. fld_sz .. ";fld_day" .. day .. "_start_minute;;" .. string.format("%02d", o["day" .. day .. "_start_minute"]) .. "]"
-		.. "field[" .. x["day" .. day].fld_t_hour .. "," .. fld_b_y .. ";" .. fld_sz .. ";fld_day" .. day .. "_end_hour;bis;" .. string.format("%02d", o["day" .. day .. "_end_hour"]) .. "]"
+		.. "field[" .. x["day" .. day].fld_t_hour .. "," .. fld_b_y .. ";" .. fld_sz .. ";fld_day" .. day .. "_end_hour;" .. S("to") .. ";" .. string.format("%02d", o["day" .. day .. "_end_hour"]) .. "]"
 		.. "label[" .. x["day" .. day].lab_t_colon .. "," .. lab_b_colon_y .. ";:]"
 		.. "field[" .. x["day" .. day].fld_t_minute .. "," .. fld_b_y .. ";" .. fld_sz .. ";fld_day" .. day .. "_end_minute;;" .. string.format("%02d", o["day" .. day .. "_end_minute"]) .. "]"
 	end
@@ -246,30 +247,30 @@ local function show_gui(name)
 		day = (5 + col) % 7
 		formspec_weekend = formspec_weekend
 		.. "label[" .. x["day" .. col].lab .. "," .. lab_w_y .. ";" .. day_abbreviations[day] .. "]"
-		.. "field[" .. x["day" .. col].fld_f_hour .. "," .. fld_w_y .. ";" .. fld_sz .. ";fld_day" .. day .. "_start_hour;von;" .. string.format("%02d", o["day" .. day .. "_start_hour"]) .. "]"
+		.. "field[" .. x["day" .. col].fld_f_hour .. "," .. fld_w_y .. ";" .. fld_sz .. ";fld_day" .. day .. "_start_hour;" .. S("from") .. ";" .. string.format("%02d", o["day" .. day .. "_start_hour"]) .. "]"
 		.. "label[" .. x["day" .. col].lab_f_colon .. "," .. lab_w_colon_y .. ";:]"
 		.. "field[" .. x["day" .. col].fld_f_minute .. "," .. fld_w_y .. ";" .. fld_sz .. ";fld_day" .. day .. "_start_minute;;" .. string.format("%02d", o["day" .. day .. "_start_minute"]) .. "]"
-		.. "field[" .. x["day" .. col].fld_t_hour .. "," .. fld_w_y .. ";" .. fld_sz .. ";fld_day" .. day .. "_end_hour;bis;" .. string.format("%02d", o["day" .. day .. "_end_hour"]) .. "]"
+		.. "field[" .. x["day" .. col].fld_t_hour .. "," .. fld_w_y .. ";" .. fld_sz .. ";fld_day" .. day .. "_end_hour;" .. S("to") .. ";" .. string.format("%02d", o["day" .. day .. "_end_hour"]) .. "]"
 		.. "label[" .. x["day" .. col].lab_t_colon .. "," .. lab_w_colon_y .. ";:]"
 		.. "field[" .. x["day" .. col].fld_t_minute .. "," .. fld_w_y .. ";" .. fld_sz .. ";fld_day" .. day .. "_end_minute;;" .. string.format("%02d", o["day" .. day .. "_end_minute"]) .. "]"
 	end
 	local formspec_exception = (o.exception_today
 			and ""
-				.. "label[" .. x.day1.lab .. "," .. lab_e_y .. ";Heute]"
-				.. "field[" .. x.day1.fld_f_hour .. "," .. fld_e_y .. ";" .. fld_sz .. ";fld_exception_start_hour;von;" .. string.format("%02d", o.exception_start_hour) .. "]"
+				.. "label[" .. x.day1.lab .. "," .. lab_e_y .. ";" .. S("Today") .. "]"
+				.. "field[" .. x.day1.fld_f_hour .. "," .. fld_e_y .. ";" .. fld_sz .. ";fld_exception_start_hour;" .. S("from") .. ";" .. string.format("%02d", o.exception_start_hour) .. "]"
 				.. "label[" .. x.day1.lab_f_colon .. "," .. lab_e_colon_y .. ";:]"
 				.. "field[" .. x.day1.fld_f_minute .. "," .. fld_e_y .. ";" .. fld_sz .. ";fld_exception_start_minute;;" .. string.format("%02d", o.exception_start_minute) .. "]"
-				.. "field[" .. x.day1.fld_t_hour .. "," .. fld_e_y .. ";" .. fld_sz .. ";fld_exception_end_hour;bis;" .. string.format("%02d", o.exception_end_hour) .. "]"
+				.. "field[" .. x.day1.fld_t_hour .. "," .. fld_e_y .. ";" .. fld_sz .. ";fld_exception_end_hour;" .. S("to") .. ";" .. string.format("%02d", o.exception_end_hour) .. "]"
 				.. "label[" .. x.day1.lab_t_colon .. "," .. lab_e_colon_y .. ";:]"
 				.. "field[" .. x.day1.fld_t_minute .. "," .. fld_e_y .. ";" .. fld_sz .. ";fld_exception_end_minute;;" .. string.format("%02d", o.exception_end_minute) .. "]"
-			or "image_button[0.34,4.5296922410056;4.205,0.7835;;add_exception;Ausnahmeregelung hinzufügen]"
+			or "image_button[0.34,4.5296922410056;4.205,0.7835;;add_exception;" .. S("Add exception") .. "]"
 		)
 	local formspec = "size[18.01,7.9267895878525]"
-	.. "label[-0.14,-0.23840485478977;Öffnungszeiten]"
+	.. "label[-0.14,-0.23840485478977;" .. S("Opening hours") .. "]"
 	.. formspec_business_days
 	.. formspec_weekend
 	.. formspec_exception
-	.. "label[" .. x.day1.lab .. ",5.4833116601647;Einstellungen]"
+	.. "label[" .. x.day1.lab .. ",5.4833116601647;" .. S("Settings") .. "]"
 	.. "label[0.34," .. lab_close_y .. ";Spieler ]"
 	.. "field[1.6," .. fld_close_y .. ";" .. fld_sz .. ";fld_warn_offset;;" .. o.warn_offset .. "]"
 	.. "label[2.18," .. lab_close_y .. ";Minuten vor Ablauf der Zeit alle]"
@@ -332,8 +333,22 @@ load_data()
 minetest.register_globalstep(tick)
 minetest.register_on_shutdown(save_data)
 minetest.register_on_prejoinplayer(on_join)
-minetest.register_chatcommand("opening_hours", {privs = {server = true}, description = "Die Öffnungszeiten konfigurieren", func = show_gui})
-minetest.register_chatcommand("öffnungszeiten", {privs = {server = true}, description = "Die Öffnungszeiten konfigurieren", func = show_gui})
+minetest.register_chatcommand(
+	"opening_hours",
+	{
+		privs = {server = true},
+		description = S("Configure the opening hours"),
+		func = show_gui
+	}
+)
+minetest.register_chatcommand(
+	"öffnungszeiten",
+	{
+		privs = {server = true},
+		description = S("Configure the opening hours"),
+		func = show_gui
+	}
+)
 minetest.register_on_player_receive_fields(progress_gui_input)
 
 
