@@ -276,8 +276,8 @@ local function show_gui(name)
 	.. "label[2.18," .. lab_close_y .. ";Minuten vor Ablauf der Zeit alle]"
 	.. "field[6.0," .. fld_close_y .. ";" .. fld_sz .. ";fld_warn_interval;;" .. o.warn_interval .. "]"
 	.. "label[6.6," .. lab_close_y .. ";Minuten warnen.]"
-	.. "image_button[5.14,7.6072821846554;2.605,0.7835;;save;Speichern]"
-	.. "image_button_exit[7.62,7.6072821846554;2.605,0.7835;;close;Schließen]"
+	.. "image_button[5.14,7.6072821846554;2.605,0.7835;;save;" .. S("Save") .. "]"
+	.. "image_button_exit[7.62,7.6072821846554;2.605,0.7835;;close;" .. S("Close") .. "]"
 	minetest.show_formspec(name, "lmz_opening_hours:gui", formspec)
 end
 

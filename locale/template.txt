@@ -1,0 +1,25 @@
+# textdomain: lmz_opening_hours
+
+### init.lua ###
+
+Opening hours=
+Settings=
+Configure the opening hours=
+Add exception=
+Today=
+Su.=
+Mo.=
+Tu.=
+We.=
+Th.=
+Fr.=
+Sa.=
+from=
+to=
+You visited outside of the opening hours=
+The server has already closed and will open again tomorrow=
+The server will open again in @1 hours=
+The server is closing!=
+The server will close in @1 minutes.=
+Save=
+Close=
