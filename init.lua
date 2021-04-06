@@ -1,3 +1,9 @@
+-- Description: Configure and enforce server opening hours
+-- Author: Elias Fleckenstein
+-- Author: Isidor Zeuner
+-- For license see LICENSE
+-- -------------------------------------------------------------------
+
 local modname = minetest.get_current_modname()
 local storage = minetest.get_mod_storage()
 local S = minetest.get_translator("lmz_opening_hours")
