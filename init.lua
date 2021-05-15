@@ -1,9 +1,48 @@
+-- Description: Configure and enforce server opening hours
+-- Author: Elias Fleckenstein
+-- Author: Isidor Zeuner
+-- For license see LICENSE
+-- -------------------------------------------------------------------
+
 local modname = minetest.get_current_modname()
 local storage = minetest.get_mod_storage()
+local S = minetest.get_translator("lmz_opening_hours")
 
 opening_hours = {}
 
-local opening_hours_default = {weekday_start = 14, weekday_end = 21, weekend_start = 8, weekend_end = 21, warn_offset = 15, warn_interval = 5}
+local opening_hours_default = {
+	version = 2,
+	day0_start_hour = 8,
+	day0_start_minute = 0,
+	day0_end_hour = 21,
+	day0_end_minute = 0,
+	day1_start_hour = 14,
+	day1_start_minute = 0,
+	day1_end_hour = 21,
+	day1_end_minute = 0,
+	day2_start_hour = 14,
+	day2_start_minute = 0,
+	day2_end_hour = 21,
+	day2_end_minute = 0,
+	day3_start_hour = 14,
+	day3_start_minute = 0,
+	day3_end_hour = 21,
+	day3_end_minute = 0,
+	day4_start_hour = 14,
+	day4_start_minute = 0,
+	day4_end_hour = 21,
+	day4_end_minute = 0,
+	day5_start_hour = 14,
+	day5_start_minute = 0,
+	day5_end_hour = 21,
+	day5_end_minute = 0,
+	day6_start_hour = 8,
+	day6_start_minute = 0,
+	day6_end_hour = 21,
+	day6_end_minute = 0,
+	warn_offset = 15,
+	warn_interval = 5
+}
 
 local warn_cooldown = 0
 
@@ -15,17 +54,48 @@ local function get_date_formated()
 	return os.date("%d.%m.%y")
 end
 
-local function is_weekend()
-	local d = os.date("%w")
-	return d == "0" or d == "6"
-end
-
-local function opening_hours_index(t, k)
-	if k:sub(1, 6) == "today_" then 
-		return t[k:gsub("today_", is_weekend() and "weekend_" or "weekday_")]
-	else
-		return opening_hours_default[k]
+local function upgrade_configuration(old)
+	local new = {
+		version = 2,
+		day0_start_hour = tonumber(old.weekend_start),
+		day0_start_minute = 0,
+		day0_end_hour = tonumber(old.weekend_end),
+		day0_end_minute = 0,
+		day1_start_hour = tonumber(old.weekday_start),
+		day1_start_minute = 0,
+		day1_end_hour = tonumber(old.weekday_end),
+		day1_end_minute = 0,
+		day2_start_hour = tonumber(old.weekday_start),
+		day2_start_minute = 0,
+		day2_end_hour = tonumber(old.weekday_end),
+		day2_end_minute = 0,
+		day3_start_hour = tonumber(old.weekday_start),
+		day3_start_minute = 0,
+		day3_end_hour = tonumber(old.weekday_end),
+		day3_end_minute = 0,
+		day4_start_hour = tonumber(old.weekday_start),
+		day4_start_minute = 0,
+		day4_end_hour = tonumber(old.weekday_end),
+		day4_end_minute = 0,
+		day5_start_hour = tonumber(old.weekday_start),
+		day5_start_minute = 0,
+		day5_end_hour = tonumber(old.weekday_end),
+		day5_end_minute = 0,
+		day6_start_hour = tonumber(old.weekend_start),
+		day6_start_minute = 0,
+		day6_end_hour = tonumber(old.weekend_end),
+		day6_end_minute = 0,
+		warn_offset = tonumber(old.warn_offset),
+		warn_interval = tonumber(old.warn_interval)
+	}
+	if old.today then
+		new.exception_today = old.today
+		new.exception_start_hour = old.today_start
+		new.exception_start_minute = 0
+		new.exception_end_hour = old.today_end
+		new.exception_end_minute = 0
 	end
+	return new
 end
 
 local function save_data()
@@ -34,42 +104,71 @@ end
 
 local function load_data()
 	opening_hours = storage:to_table().fields
-	setmetatable(opening_hours, {__index = opening_hours_index})
+	if opening_hours.weekday_start then
+		opening_hours = upgrade_configuration(opening_hours)
+	elseif not opening_hours.version then
+		opening_hours = opening_hours_default
+	end
+	for k, v in pairs(opening_hours) do
+		if k ~= "exception_today" then
+			opening_hours[k] = tonumber(v)
+		end
+	end
 end
 
 local function reset_execption()
-	opening_hours.today = nil
-	opening_hours.today_start = nil
-	opening_hours.today_end = nil
+	opening_hours.exception_today = nil
+end
+
+local function opening_today()
+	local exception = opening_hours.exception_today
+	local day_key
+	if exception and exception == get_date_formated() then
+		day_key = "exception"
+	else
+		local d = os.date("%w")
+		day_key = "day" .. d
+	end
+	return {
+		start_hour = opening_hours[day_key .. "_start_hour"],
+		start_minute = opening_hours[day_key .. "_start_minute"],
+		end_hour = opening_hours[day_key .. "_end_hour"],
+		end_minute = opening_hours[day_key .. "_end_minute"]
+	}
 end
 
 local function create_exception()
-	opening_hours.today = get_date_formated()
-	opening_hours.today_start = opening_hours.today_start
-	opening_hours.today_end = opening_hours.today_end
+	local today = opening_today()
+	opening_hours.exception_today = get_date_formated()
+	opening_hours.exception_start_hour = today.start_hour
+	opening_hours.exception_start_minute = today.start_minute
+	opening_hours.exception_end_hour = today.end_hour
+	opening_hours.exception_end_minute = today.end_minute
 end
 
 local function tick(dtime)
 	local d = get_date()
-	if opening_hours.today and opening_hours.today ~= get_date_formated() then
+	local exception = opening_hours.exception_today
+	if exception and exception ~= get_date_formated() then
 		reset_execption()
 	end
-	local diff = tonumber(opening_hours.today_end) - d.hour
-	if diff == 1 then
-		local minutes_remaining = (60 - d.min)
-		if minutes_remaining <= tonumber(opening_hours.warn_offset) then
-			if warn_cooldown <= 0 then
-				minetest.chat_send_all(minetest.colorize("#FF4D00", "Der Server schießt in " .. minutes_remaining .. " Minuten."))
-				warn_cooldown = tonumber(opening_hours.warn_interval) * 60
-			else
-				warn_cooldown = warn_cooldown - dtime
-			end
+	local today = opening_today()
+	local end_time = today.end_hour * 60 + today.end_minute
+	local now_time = d.hour * 60 + d.min
+	local minutes_remaining = end_time - now_time
+	if 0 < minutes_remaining
+	and minutes_remaining <= opening_hours.warn_offset then
+		if warn_cooldown <= 0 then
+			minetest.chat_send_all(minetest.colorize("#FF4D00", S("The server will close in @1 minutes.", minutes_remaining)))
+			warn_cooldown = tonumber(opening_hours.warn_interval) * 60
+		else
+			warn_cooldown = warn_cooldown - dtime
 		end
-	elseif diff <= 0 then
+	elseif minutes_remaining <= 0 then
 		for _, player in pairs(minetest.get_connected_players()) do
 			local name = player:get_player_name()
 			if not minetest.check_player_privs(name, {server = true}) then
-				minetest.kick_player(name, "Der Server schließt!")
+				minetest.kick_player(name, S("The server is closing!"))
 			end
 		end
 	end
@@ -77,30 +176,142 @@ end
 
 local function on_join(name)
 	if minetest.check_player_privs(name, {server = true}) then return end
+	local today = opening_today()
  	local d = get_date()
-	local diff = tonumber(opening_hours.today_start) - d.hour
+	local start_time = today.start_hour * 60 + today.start_minute
+	local end_time = today.end_hour * 60 + today.end_minute
+	local now_time = d.hour * 60 + d.min
+	local diff = start_time - now_time
 	if diff > 0 then
-		return "Besuch erfolgte außerhalb der Öffnungszeiten. Der Server hat in " .. math.ceil(diff) .. " Stunde(n) wieder geöffnet."
-	elseif tonumber(opening_hours.today_end) <= d.hour then
-		return "Besuch erfolgte außerhalb der Öffnungszeiten. Der Server hat bereits geschlossen und hat Morgen wieder geöffnet."
+		return S("You visited outside of the opening hours") .. ". " .. S("The server will open again in @1 hours", math.ceil(diff / 60)) .. "."
+	elseif end_time <= now_time then
+		return S("You visited outside of the opening hours") .. ". " .. S("The server has already closed and will open again tomorrow") .. "."
 	end
 end
 
+local minute_step = 5
+
 local function show_gui(name)
+	local fld_w = 0.88
+	local fld_h = 0.82429501084599
+	local fld_sz = fld_w .. "," .. fld_h
+	local inline_off = 0.2427394885132
+	local lab_close_y = 6.3935847420893
+	local fld_close_y = lab_close_y + 0.2427394885132
+	local pre_colon_off = 0.4
+	local minute_off = 0.04
+	local to_off = 1.24
+	local day_off = 3.6
+	local x = {
+		day1 = {}
+	}
+	x.day1.lab = 0.1
+	x.day1.fld_f_hour = 0.64
+	x.day1.fld_f_minute = x.day1.fld_f_hour + fld_w - minute_off
+	x.day1.lab_f_colon = x.day1.fld_f_minute - pre_colon_off
+	x.day1.fld_t_hour = x.day1.lab_f_colon + to_off
+	x.day1.fld_t_minute = x.day1.fld_t_hour + fld_w - minute_off
+	x.day1.lab_t_colon = x.day1.fld_t_minute - pre_colon_off
+	local last
+	for day = 1, 5, 1 do
+		if last then
+			x["day" .. day] = {}
+			for k, v in pairs(x["day" .. last]) do
+				x["day" .. day][k] = v + day_off
+			end
+		end
+		last = day
+	end
+	local below_off = 1.1530125704378
+	local lab_b_y = 0.28175119202427
+	local fld_b_y = lab_b_y + below_off
+	local lab_b_colon_y = fld_b_y - inline_off
+	local lab_w_y = 2.0156046814044
+	local fld_w_y = lab_w_y + below_off
+	local lab_w_colon_y = fld_w_y - inline_off
+	local lab_e_y = 3.7494581707846
+	local fld_e_y = lab_e_y + below_off
+	local lab_e_colon_y = fld_e_y - inline_off
 	local o = opening_hours
-	local formspec = "size[10.01,7.9267895878525]label[-0.14,-0.23840485478977;Öffnungszeiten]label[0.1,0.28175119202427;Mo.-Fr.]label[0.1,2.0156046814044;Sa.-So.]label[0.1,3.7494581707846;Heute]label[0.1,5.4833116601647;Einstellungen]label[0.34,6.3935847420893;Spieler ]label[2.18,6.3935847420893;Minuten vor Ablauf der Zeit alle]label[6.6,6.3935847420893;Minuten warnen.]image_button_exit[7.62,7.6072821846554;2.605,0.7835;;close;Schließen]image_button[5.14,7.6072821846554;2.605,0.7835;;save;Speichern]"
-	.. "field[0.64,1.4347637624621;1.0,0.82429501084599;fld_weekday_start;von;" .. o.weekday_start .. "]"
-	.. "field[1.6,1.4347637624621;1.0,0.82429501084599;fld_weekday_end;bis;" .. o.weekday_end .. "]"
-	.. "field[0.64,3.1686172518422;1.0,0.82429501084599;fld_weekend_start;von;" .. o.weekend_start .. "]"
-	.. "field[1.6,3.1686172518422;1.0,0.82429501084599;fld_weekend_end;bis;" .. o.weekend_end .. "]"
-	.. "field[1.6,6.6363242306025;1.0,0.82429501084599;fld_warn_offset;;" .. o.warn_offset .. "]"
-	.. "field[6.0,6.6363242306025;1.0,0.82429501084599;fld_warn_interval;;" .. o.warn_interval .. "]"
-	.. (o.today
+	local day_abbreviations = {
+		[0] = S("Su."),
+		[1] = S("Mo."),
+		[2] = S("Tu."),
+		[3] = S("We."),
+		[4] = S("Th."),
+		[5] = S("Fr."),
+		[6] = S("Sa.")
+	}
+	local player_info = minetest.get_player_information(name)
+	local warning_config_translation_string = S(
+		"@1 minutes before closing, warn the players every @2 minutes.",
+		"<warn_offset>",
+		"<warn_interval>"
+	)
+	local warning_config = minetest.get_translated_string(
+		player_info.lang_code,
+		warning_config_translation_string
+	) .. "<"
+	local formspec_warning = ""
+	local warning_x = 0.34
+	for fragment in warning_config:gmatch("([^<>]+<?)") do
+		local label = fragment:match("<$")
+		if label then
+			fragment = fragment:gsub("<$", "")
+		end
+		if label then
+			formspec_warning = formspec_warning ..
+			"label[" .. warning_x .. "," .. lab_close_y .. ";" .. fragment .. "]"
+			warning_x = warning_x + 0.125 * fragment:len()
+		else
+			formspec_warning = formspec_warning ..
+			"field[" .. (warning_x + 0.2) .. "," .. fld_close_y .. ";" .. fld_sz .. ";fld_" .. fragment .. ";;" .. o[fragment] .. "]"
+			warning_x = warning_x + 0.6
+		end
+	end
+	local formspec_business_days = ""
+	for day = 1, 5, 1 do
+		formspec_business_days = formspec_business_days
+		.. "label[" .. x["day" .. day].lab .. "," .. lab_b_y .. ";" .. day_abbreviations[day] .. "]"
+		.. "field[" .. x["day" .. day].fld_f_hour .. "," .. fld_b_y .. ";" .. fld_sz .. ";fld_day" .. day .. "_start_hour;" .. S("from") .. ";" .. string.format("%02d", o["day" .. day .. "_start_hour"]) .. "]"
+		.. "label[" .. x["day" .. day].lab_f_colon .. "," .. lab_b_colon_y .. ";:]"
+		.. "field[" .. x["day" .. day].fld_f_minute .. "," .. fld_b_y .. ";" .. fld_sz .. ";fld_day" .. day .. "_start_minute;;" .. string.format("%02d", o["day" .. day .. "_start_minute"]) .. "]"
+		.. "field[" .. x["day" .. day].fld_t_hour .. "," .. fld_b_y .. ";" .. fld_sz .. ";fld_day" .. day .. "_end_hour;" .. S("to") .. ";" .. string.format("%02d", o["day" .. day .. "_end_hour"]) .. "]"
+		.. "label[" .. x["day" .. day].lab_t_colon .. "," .. lab_b_colon_y .. ";:]"
+		.. "field[" .. x["day" .. day].fld_t_minute .. "," .. fld_b_y .. ";" .. fld_sz .. ";fld_day" .. day .. "_end_minute;;" .. string.format("%02d", o["day" .. day .. "_end_minute"]) .. "]"
+	end
+	local formspec_weekend = ""
+	for col = 1, 2, 1 do
+		local day = (5 + col) % 7
+		formspec_weekend = formspec_weekend
+		.. "label[" .. x["day" .. col].lab .. "," .. lab_w_y .. ";" .. day_abbreviations[day] .. "]"
+		.. "field[" .. x["day" .. col].fld_f_hour .. "," .. fld_w_y .. ";" .. fld_sz .. ";fld_day" .. day .. "_start_hour;" .. S("from") .. ";" .. string.format("%02d", o["day" .. day .. "_start_hour"]) .. "]"
+		.. "label[" .. x["day" .. col].lab_f_colon .. "," .. lab_w_colon_y .. ";:]"
+		.. "field[" .. x["day" .. col].fld_f_minute .. "," .. fld_w_y .. ";" .. fld_sz .. ";fld_day" .. day .. "_start_minute;;" .. string.format("%02d", o["day" .. day .. "_start_minute"]) .. "]"
+		.. "field[" .. x["day" .. col].fld_t_hour .. "," .. fld_w_y .. ";" .. fld_sz .. ";fld_day" .. day .. "_end_hour;" .. S("to") .. ";" .. string.format("%02d", o["day" .. day .. "_end_hour"]) .. "]"
+		.. "label[" .. x["day" .. col].lab_t_colon .. "," .. lab_w_colon_y .. ";:]"
+		.. "field[" .. x["day" .. col].fld_t_minute .. "," .. fld_w_y .. ";" .. fld_sz .. ";fld_day" .. day .. "_end_minute;;" .. string.format("%02d", o["day" .. day .. "_end_minute"]) .. "]"
+	end
+	local formspec_exception = (o.exception_today
 			and ""
-				.. "field[0.64,4.9024707412224;1.0,0.82429501084599;fld_today_start;von;" .. o.today_start .. "]"
-				.. "field[1.6,4.9024707412224;1.0,0.82429501084599;fld_today_end;bis;" .. o.today_end .. "]"
-			or "image_button[0.34,4.5296922410056;4.205,0.7835;;add_exception;Ausnahmeregelung hinzufügen]"
+				.. "label[" .. x.day1.lab .. "," .. lab_e_y .. ";" .. S("Today") .. "]"
+				.. "field[" .. x.day1.fld_f_hour .. "," .. fld_e_y .. ";" .. fld_sz .. ";fld_exception_start_hour;" .. S("from") .. ";" .. string.format("%02d", o.exception_start_hour) .. "]"
+				.. "label[" .. x.day1.lab_f_colon .. "," .. lab_e_colon_y .. ";:]"
+				.. "field[" .. x.day1.fld_f_minute .. "," .. fld_e_y .. ";" .. fld_sz .. ";fld_exception_start_minute;;" .. string.format("%02d", o.exception_start_minute) .. "]"
+				.. "field[" .. x.day1.fld_t_hour .. "," .. fld_e_y .. ";" .. fld_sz .. ";fld_exception_end_hour;" .. S("to") .. ";" .. string.format("%02d", o.exception_end_hour) .. "]"
+				.. "label[" .. x.day1.lab_t_colon .. "," .. lab_e_colon_y .. ";:]"
+				.. "field[" .. x.day1.fld_t_minute .. "," .. fld_e_y .. ";" .. fld_sz .. ";fld_exception_end_minute;;" .. string.format("%02d", o.exception_end_minute) .. "]"
+			or "image_button[0.34,4.5296922410056;4.205,0.7835;;add_exception;" .. S("Add exception") .. "]"
 		)
+	local formspec = "size[18.01,7.9267895878525]"
+	.. "label[-0.14,-0.23840485478977;" .. S("Opening hours") .. "]"
+	.. formspec_business_days
+	.. formspec_weekend
+	.. formspec_exception
+	.. "label[" .. x.day1.lab .. ",5.4833116601647;" .. S("Settings") .. "]"
+	.. formspec_warning
+	.. "image_button[5.14,7.6072821846554;2.605,0.7835;;save;" .. S("Save") .. "]"
+	.. "image_button_exit[7.62,7.6072821846554;2.605,0.7835;;close;" .. S("Close") .. "]"
 	minetest.show_formspec(name, "lmz_opening_hours:gui", formspec)
 end
 
@@ -111,8 +322,41 @@ local function progress_gui_input(player, formname, fields)
 		create_exception()
 	end
 	for k, v in pairs(fields) do
-		if k:sub(1, 4) == "fld_" and tonumber(v) then
-			opening_hours[k:gsub("fld_", "")] = v
+		if k:sub(1, 4) == "fld_" then
+			local field = k:gsub("fld_", "")
+			local old = opening_hours[field]
+			opening_hours[field] = tonumber(v) or old
+		end
+	end
+	for k, v in pairs(opening_hours) do
+		if k:match("_hour$") then
+			opening_hours[k] = math.max(0, math.min(23, v))
+		elseif k:match("_minute$") then
+			opening_hours[k] = math.max(
+				0,
+				math.min(
+					60 - minute_step,
+					minute_step * math.floor(
+						v / minute_step + 0.5
+					)
+				)
+			)
+		end
+	end
+	for k, v in pairs(opening_hours) do
+		if k:match("_end_hour$") then
+			local start = opening_hours[k:gsub("_end_", "_start_")]
+			if start > v then
+				opening_hours[k] = start
+			end
+		elseif k:match("_end_minute$") then
+			local hour_k = k:gsub("_minute$", "_hour")
+			local hour_start_k = hour_k:gsub("_end_", "_start_")
+			local start_k = k:gsub("_end_", "_start_")
+			if opening_hours[hour_start_k] >= opening_hours[hour_k]
+			and opening_hours[start_k] > v then
+				opening_hours[k] = opening_hours[start_k]
+			end
 		end
 	end
 	if not fields.quit and not fields.close then show_gui(name) end
@@ -123,7 +367,22 @@ load_data()
 minetest.register_globalstep(tick)
 minetest.register_on_shutdown(save_data)
 minetest.register_on_prejoinplayer(on_join)
-minetest.register_chatcommand("öffnungszeiten", {privs = {server = true}, description = "Die Öffnungszeiten konfigurieren", func = show_gui})
+minetest.register_chatcommand(
+	"opening_hours",
+	{
+		privs = {server = true},
+		description = S("Configure the opening hours"),
+		func = show_gui
+	}
+)
+minetest.register_chatcommand(
+	"öffnungszeiten",
+	{
+		privs = {server = true},
+		description = S("Configure the opening hours"),
+		func = show_gui
+	}
+)
 minetest.register_on_player_receive_fields(progress_gui_input)
 
 

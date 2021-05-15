@@ -1,0 +1,26 @@
+# textdomain: lmz_opening_hours
+
+### init.lua ###
+
+Opening hours=Öffnungszeiten
+Settings=Einstellungen
+Configure the opening hours=Die Öffnungszeiten konfigurieren
+Add exception=Ausnahmeregelung hinzufügen
+Today=Heute
+Su.=So.
+Mo.=Mo.
+Tu.=Di.
+We.=Mi.
+Th.=Do.
+Fr.=Fr.
+Sa.=Sa.
+from=von
+to=bis
+You visited outside of the opening hours=Besuch erfolgte außerhalb der Öffnungszeiten
+The server has already closed and will open again tomorrow=Der Server hat bereits geschlossen und hat Morgen wieder geöffnet
+The server will open again in @1 hours=Der Server hat in @1 Stunde(n) wieder geöffnet
+The server is closing!=Der Server schließt!
+The server will close in @1 minutes.=Der Server schließt in @1 Minuten.
+Save=Speichern
+Close=Schließen
+@1 minutes before closing, warn the players every @2 minutes.=Spieler @1 Minuten vor Ablauf der Zeit alle @2 Minuten warnen.
